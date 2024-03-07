@@ -1,130 +1,139 @@
 #include <iostream>
+#include <string>
+#include <vector>
 
-enum class ConversationOption
-{
-    OPTION_A,
-    OPTION_B,
-    OPTION_C,
-    OPTION_D
-};
-
-class BinaryConversationNode
-{
+class DialogueOption {
 public:
-    ConversationOption option;
-    BinaryConversationNode* left;
-    BinaryConversationNode* right;
+    std::string optionText;
+    int optionVal; // Optional integer argument for additional processing
+    class DialogueNode* nextNode;
 
-    BinaryConversationNode(ConversationOption o) : option(o), left(nullptr), right(nullptr) {}
+    DialogueOption(std::string text, class DialogueNode* node, int val = 0)
+        : optionText(std::move(text)), nextNode(node), optionVal(val) {}
 };
 
-class ConversationTree
-{
+class DialogueNode {
+public:
+    int nodeID;
+    std::string nodeText;
+    std::vector<DialogueOption*> options;
+
+    DialogueNode(int id, std::string text) : nodeID(id), nodeText(std::move(text)) {}
+
+    void addDialogueOption(std::string text, DialogueNode* nextNode, int val = 0) {
+        options.push_back(new DialogueOption(std::move(text), nextNode, val));
+    }
+
+    void removeDialogueOption(int index) {
+        if (index >= 0 && index < options.size()) {
+            delete options[index];
+            options.erase(options.begin() + index);
+        }
+    }
+};
+
+class DialogueTree {
 private:
-    BinaryConversationNode* root;
+    std::vector<DialogueNode*> nodes;
 
 public:
-    ConversationTree() : root(nullptr) {}
+    DialogueTree() {}
 
-    // Método para insertar un nodo en el árbol
-    void insert(ConversationOption option)
-    {
-        root = insertRec(root, option);
+    void addDialogueNode(int id, std::string text) {
+        nodes.push_back(new DialogueNode(id, std::move(text)));
     }
 
-    // Método de inserción recursiva
-    BinaryConversationNode* insertRec(BinaryConversationNode* node, ConversationOption option)
-    {
-        if (node == nullptr)
-        {
-            return new BinaryConversationNode(option);
+    DialogueNode* getDialogueNodeWithID(int id) {
+        for (auto node : nodes) {
+            if (node->nodeID == id) {
+                return node;
+            }
         }
-
-        // Insertar en el subárbol izquierdo si la opción es menor
-        if (option < node->option)
-        {
-            node->left = insertRec(node->left, option);
-        }
-        // Insertar en el subárbol derecho si la opción es mayor
-        else if (option > node->option)
-        {
-            node->right = insertRec(node->right, option);
-        }
-
-        return node;
+        return nullptr;
     }
 
-    // Método para buscar una opción en el árbol
-    bool search(ConversationOption option)
-    {
-        return searchRec(root, option);
+    void removeDialogueNode(int id) {
+        for (auto it = nodes.begin(); it != nodes.end(); ++it) {
+            if ((*it)->nodeID == id) {
+                delete* it;
+                nodes.erase(it);
+                break;
+            }
+        }
     }
 
-    // Método de búsqueda recursiva
-    bool searchRec(BinaryConversationNode* node, ConversationOption option)
-    {
-        if (node == nullptr)
-        {
-            return false;
-        }
+    DialogueNode* getFirstNode() {
+        return (!nodes.empty()) ? nodes[0] : nullptr;
+    }
 
-        if (option == node->option)
-        {
-            return true;
-        }
-
-        if (option < node->option)
-        {
-            return searchRec(node->left, option);
-        }
-
-        return searchRec(node->right, option);
+    const std::vector<DialogueNode*>& getDialogueNodes() const {
+        return nodes;
     }
 };
 
-int main()
-{
-    // Crear un árbol de decisiones en una conversación e insertar algunas opciones
-    ConversationTree conversationOptions;
-    conversationOptions.insert(ConversationOption::OPTION_A);
-    conversationOptions.insert(ConversationOption::OPTION_B);
-    conversationOptions.insert(ConversationOption::OPTION_D);
+int main() {
+    DialogueTree tree;
 
-    // Buscar opciones en el árbol
-    if (conversationOptions.search(ConversationOption::OPTION_A))
-    {
-        printf("NPC ofrece la opcion A en la conversacion.\n");
-    }
-    if (!conversationOptions.search(ConversationOption::OPTION_A))
-    {
-        printf("NPC no ofrece la opcion A en la conversacion.\n");
-    }
+    tree.addDialogueNode(1, "You don't look like you are from around here. (1)");
+    tree.addDialogueNode(2, "Newton, eh? I heard there's trouble brewing down there. (2)");
+    tree.addDialogueNode(3, "Oh really? Then you must know Mr. Bowler. (3)");
+    tree.addDialogueNode(4, "You liar! There ain't no Mr. Bowler, I made him up! (4)");
+    tree.addDialogueNode(5, "Don't worry about it. Say do you have something to eat? I'm starving. (5)");
 
-    if (conversationOptions.search(ConversationOption::OPTION_B))
-    {
-        printf("NPC ofrece la opcion B en la conversacion.\n");
-    }
-    if (!conversationOptions.search(ConversationOption::OPTION_B))
-    {
-        printf("NPC no ofrece la opcion B en la conversacion.\n");
-    }
+    tree.getDialogueNodeWithID(1)->addDialogueOption("I came here from Newton. (1-2)", tree.getDialogueNodeWithID(2));
+    tree.getDialogueNodeWithID(1)->addDialogueOption("I've lived here all my life! (1-3)", tree.getDialogueNodeWithID(3));
+    tree.getDialogueNodeWithID(1)->addDialogueOption("An option in node 1. Select to exit.", nullptr);
 
-    if (conversationOptions.search(ConversationOption::OPTION_C))
-    {
-        printf("NPC ofrece la opcion C en la conversacion.\n");
-    }
-    if (!conversationOptions.search(ConversationOption::OPTION_C))
-    {
-        printf("NPC no ofrece la opcion C en la conversacion.\n");
-    }
+    tree.getDialogueNodeWithID(2)->addDialogueOption("Did i say Newton? I'm actually from Springville. (2-3)", tree.getDialogueNodeWithID(3));
+    tree.getDialogueNodeWithID(2)->addDialogueOption("I haven't heard about any trouble. (2-5)", tree.getDialogueNodeWithID(5));
+    tree.getDialogueNodeWithID(2)->addDialogueOption("An option in node 2. Select to exit.", nullptr);
 
-    if (conversationOptions.search(ConversationOption::OPTION_D))
-    {
-        printf("NPC ofrece la opcion D en la conversacion.\n");
-    }
-    if (!conversationOptions.search(ConversationOption::OPTION_D))
-    {
-        printf("NPC no ofrece la opcion D en la conversacion.\n");
+    tree.getDialogueNodeWithID(3)->addDialogueOption("Who?. (3-5)", tree.getDialogueNodeWithID(5));
+    tree.getDialogueNodeWithID(3)->addDialogueOption("Mr. Bowler is a good friend of mine! (3-4)", tree.getDialogueNodeWithID(4));
+    tree.getDialogueNodeWithID(3)->addDialogueOption("An option in node 3. Select to exit.", nullptr);
+
+    tree.getDialogueNodeWithID(3)->addDialogueOption(
+        "Select to go to node 1 and remove node 3 from the tree.",
+        tree.getDialogueNodeWithID(1),
+        1);
+
+    DialogueNode* currentNode = tree.getFirstNode();
+
+    while (currentNode != nullptr) {
+        std::cout << "Node #" << currentNode->nodeID << ": " << currentNode->nodeText << "\n";
+        for (int i = 0; i < currentNode->options.size(); ++i)
+            std::cout << "\t[" << i + 1 << "] " << currentNode->options[i]->optionText << "\n";
+
+        int input;
+        std::cin >> input;
+        --input;
+
+        if (input < currentNode->options.size() && input >= 0) {
+            if (currentNode->options[input]->optionVal == 1) {
+                DialogueNode* tmp = currentNode;
+                currentNode = currentNode->options[input]->nextNode;
+
+                for (auto it = tree.getDialogueNodes().begin(); it != tree.getDialogueNodes().end(); ++it) {
+                    if ((*it)->nodeID != tmp->nodeID) {
+                        for (int i = 0; i < (*it)->options.size(); ++i) {
+                            if ((*it)->options[i]->nextNode == tmp) {
+                                tree.getDialogueNodeWithID((*it)->nodeID)->removeDialogueOption(i);
+                                tree.getDialogueNodeWithID((*it)->nodeID)->addDialogueOption(
+                                    "A new option! Select this to exit.",
+                                    nullptr);
+                            }
+                        }
+                    }
+                }
+
+                tree.removeDialogueNode(tmp->nodeID);
+            }
+            else {
+                currentNode = currentNode->options[input]->nextNode;
+            }
+        }
+
+        std::cout << "\n";
     }
 
     return 0;
