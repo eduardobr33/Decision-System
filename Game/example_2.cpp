@@ -92,10 +92,7 @@ int main() {
     tree.getDialogueNodeWithID(3)->addDialogueOption("Mr. Bowler is a good friend of mine! (3-4)", tree.getDialogueNodeWithID(4));
     tree.getDialogueNodeWithID(3)->addDialogueOption("An option in node 3. Select to exit.", nullptr);
 
-    tree.getDialogueNodeWithID(3)->addDialogueOption(
-        "Select to go to node 1 and remove node 3 from the tree.",
-        tree.getDialogueNodeWithID(1),
-        1);
+    tree.getDialogueNodeWithID(3)->addDialogueOption("Select to go to node 1 and remove node 3 from the tree.",tree.getDialogueNodeWithID(1),1);
 
     DialogueNode* currentNode = tree.getFirstNode();
 
