@@ -1,0 +1,11 @@
+:: StoryTitle
+Mi Historia
+
+:: Start
+Bienvenido a mi historia. [[RecogerObjeto]] o [[MatarMonstruo]].
+
+:: RecogerObjeto
+Has recogido un objeto. -> DesbloquearDialogo
+
+:: MatarMonstruo
+Has matado a un monstruo. -> MostrarNuevoObjeto

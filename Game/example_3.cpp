@@ -1,156 +1,83 @@
 /*#include <iostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
-#include "pugixml.hpp"
 
-class DialogueOption {
-public:
-    std::string optionText;
-    int optionVal;
-    class DialogueNode* nextNode;
-
-    DialogueOption(std::string text, class DialogueNode* node, int val = 0)
-        : optionText(std::move(text)), nextNode(node), optionVal(val) {}
+// Enumeración de eventos
+enum class EventType {
+    RecogerObjeto,
+    MatarMonstruo
 };
 
-class DialogueNode {
-public:
-    int nodeID;
-    std::string nodeText;
-    std::vector<DialogueOption*> options;
+// Enumeración de acciones
+enum class ActionType {
+    DesbloquearDialogo,
+    MostrarNuevoObjeto,
+    AbrirPuerta
+};
 
-    DialogueNode(int id, std::string text) : nodeID(id), nodeText(std::move(text)) {}
+// Definición de una acción
+struct Action {
+    ActionType type;
+    std::string description;
 
-    void addDialogueOption(std::string text, DialogueNode* nextNode, int val = 0) {
-        options.push_back(new DialogueOption(std::move(text), nextNode, val));
-    }
+    Action(ActionType t, const std::string& desc) : type(t), description(desc) {}
+};
 
-    void removeDialogueOption(int index) {
-        if (index >= 0 && index < options.size()) {
-            delete options[index];
-            options.erase(options.begin() + index);
-        }
+// Definición de un evento y sus acciones asociadas
+struct Event {
+    std::string name;
+    std::vector<Action> actions;
+
+    Event(const std::string& n) : name(n) {}
+
+    void addAction(ActionType type, const std::string& desc) {
+        actions.emplace_back(type, desc);
     }
 };
 
-class DialogueTree {
+// Clase que gestiona los eventos y sus acciones asociadas
+class EventManager {
 private:
-    std::vector<DialogueNode*> nodes;
+    std::unordered_map<EventType, Event> eventMap;
 
 public:
-    DialogueTree() {}
-
-    void addDialogueNode(int id, std::string text) {
-        nodes.push_back(new DialogueNode(id, std::move(text)));
+    void registerEvent(EventType eventType, const std::string& eventName) {
+        eventMap.emplace(eventType, Event(eventName));
     }
 
-    DialogueNode* getDialogueNodeWithID(int id) {
-        for (auto node : nodes) {
-            if (node->nodeID == id) {
-                return node;
-            }
-        }
-        return nullptr;
-    }
-
-    void removeDialogueNode(int id) {
-        for (auto it = nodes.begin(); it != nodes.end(); ++it) {
-            if ((*it)->nodeID == id) {
-                delete* it;
-                nodes.erase(it);
-                break;
-            }
+    void addActionToEvent(EventType eventType, ActionType actionType, const std::string& actionDescription) {
+        auto it = eventMap.find(eventType);
+        if (it != eventMap.end()) {
+            it->second.addAction(actionType, actionDescription);
         }
     }
 
-    DialogueNode* getFirstNode() {
-        return (!nodes.empty()) ? nodes[0] : nullptr;
+    void triggerEvent(EventType eventType) {
+        auto it = eventMap.find(eventType);
+        if (it != eventMap.end()) {
+            std::cout << "Event triggered: " << it->second.name << std::endl;
+            for (const auto& action : it->second.actions) {
+                std::cout << " - Action: " << action.description << std::endl;
+            }
+        }
     }
-
-    const std::vector<DialogueNode*>& getDialogueNodes() const {
-        return nodes;
-    }
-
-    bool loadFromXML(const std::string& filename);
 };
-
-bool DialogueTree::loadFromXML(const std::string& filename) {
-    pugi::xml_document doc;
-    if (!doc.load_file(filename.c_str())) {
-        std::cerr << "Error al cargar el archivo XML." << std::endl;
-        return false;
-    }
-
-    for (pugi::xml_node node : doc.child("DialogueTree").children("DialogueNode")) {
-        int id = node.attribute("ID").as_int();
-        std::string text = node.child_value("Text");
-        addDialogueNode(id, text);
-
-        DialogueNode* currentNode = getDialogueNodeWithID(id);
-
-        for (pugi::xml_node option : node.child("Options").children("Option")) {
-            std::string optionText = option.child_value("Text");
-            int nextNodeID = option.attribute("NextNode").as_int();
-            int optionVal = option.attribute("Value").as_int();
-
-            DialogueNode* nextNode = getDialogueNodeWithID(nextNodeID);
-            currentNode->addDialogueOption(optionText, nextNode, optionVal);
-        }
-    }
-
-    return true;
-}
 
 int main() {
-    DialogueTree tree;
+    EventManager eventManager;
 
-    // Cargar el árbol desde un archivo XML
-    if (tree.loadFromXML("dialogue.xml")) {
-        std::cout << "Árbol cargado desde XML con éxito.\n";
+    // Registro de eventos
+    eventManager.registerEvent(EventType::RecogerObjeto, "Recoger Objeto");
+    eventManager.registerEvent(EventType::MatarMonstruo, "Matar Monstruo");
 
-        // Iniciar la conversación
-        DialogueNode* currentNode = tree.getFirstNode();
+    // Añadir acciones a los eventos
+    eventManager.addActionToEvent(EventType::RecogerObjeto, ActionType::MostrarNuevoObjeto, "Mostrar nuevo objeto en el inventario");
+    eventManager.addActionToEvent(EventType::MatarMonstruo, ActionType::DesbloquearDialogo, "Desbloquear nuevo diálogo");
 
-        while (currentNode != nullptr) {
-            std::cout << "Node #" << currentNode->nodeID << ": " << currentNode->nodeText << "\n";
-            for (int i = 0; i < currentNode->options.size(); ++i)
-                std::cout << "\t[" << i + 1 << "] " << currentNode->options[i]->optionText << "\n";
-
-            int input;
-            std::cin >> input;
-            --input;
-
-            if (input < currentNode->options.size() && input >= 0) {
-                if (currentNode->options[input]->optionVal == 1) {
-                    DialogueNode* tmp = currentNode;
-                    currentNode = currentNode->options[input]->nextNode;
-
-                    for (auto it = tree.getDialogueNodes().begin(); it != tree.getDialogueNodes().end(); ++it) {
-                        if ((*it)->nodeID != tmp->nodeID) {
-                            for (int i = 0; i < (*it)->options.size(); ++i) {
-                                if ((*it)->options[i]->nextNode == tmp) {
-                                    tree.getDialogueNodeWithID((*it)->nodeID)->removeDialogueOption(i);
-                                    tree.getDialogueNodeWithID((*it)->nodeID)->addDialogueOption(
-                                        "A new option! Select this to exit.",
-                                        nullptr);
-                                }
-                            }
-                        }
-                    }
-
-                    tree.removeDialogueNode(tmp->nodeID);
-                }
-                else {
-                    currentNode = currentNode->options[input]->nextNode;
-                }
-            }
-
-            std::cout << "\n";
-        }
-    }
-    else {
-        std::cerr << "Error al cargar el árbol desde XML.\n";
-    }
+    // Simulación de eventos en el juego
+    eventManager.triggerEvent(EventType::RecogerObjeto);
+    eventManager.triggerEvent(EventType::MatarMonstruo);
 
     return 0;
 }*/

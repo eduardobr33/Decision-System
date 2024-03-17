@@ -97,8 +97,10 @@
   <ItemGroup>
     <ClCompile Include="example.cpp" />
     <ClCompile Include="example_2.cpp" />
+    <ClCompile Include="example_4.cpp" />
     <ClInclude Include="Source\External\PugiXml\src\pugiconfig.hpp" />
     <ClInclude Include="Source\External\PugiXml\src\pugixml.hpp" />
+    <ClCompile Include="example_3.cpp" />
     <ClCompile Include="Source\External\PugiXml\src\pugixml.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

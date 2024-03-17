@@ -1,0 +1,39 @@
+:: StoryTitle
+Prueba
+
+
+:: StoryData
+{
+  "ifid": "C7174052-923E-469F-9A39-734A362DB7E4",
+  "format": "Harlowe",
+  "format-version": "3.3.8",
+  "start": "Start",
+  "zoom": 1
+}
+
+
+:: DesbloquearDialogo {"position":"600,700","size":"100,100"}
+
+
+
+:: MatarMonstruo {"position":"1050,500","size":"100,100"}
+Has matado a un monstruo especial.
+
+[[MostrarNuevoObjeto]]
+
+
+:: MostrarNuevoObjeto {"position":"1175,700","size":"100,100"}
+
+
+
+:: RecogerObjeto {"position":"700,500","size":"100,100"}
+Has recogido un objeto.
+
+[[DesbloquearDialogo]]
+
+
+:: Start {"position":"875,375","size":"100,100"}
+Bienvenido a mi historia.
+
+[[RecogerObjeto]]
+[[MatarMonstruo]]

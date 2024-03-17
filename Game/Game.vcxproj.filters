@@ -6,6 +6,8 @@
     </ClCompile>
     <ClCompile Include="example.cpp" />
     <ClCompile Include="example_2.cpp" />
+    <ClCompile Include="example_3.cpp" />
+    <ClCompile Include="example_4.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\External\PugiXml\src\pugiconfig.hpp">
